@@ -2,8 +2,8 @@
   "canisters": {
     "icpsc_icrc1_ledger_canister": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-02-27/ledger.did",
-      "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-02-27/ic-icrc1-ledger.wasm.gz",
+      "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-04-14/ledger.did",
+      "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-04-14/ic-icrc1-ledger.wasm.gz",
       "init_arg": "(variant {Init = record { token_symbol = \"icpsc\"; token_name = \"ICP Store Coin\"; minting_account = record { owner = principal \"qghf6-hwdgu-bevig-tg7gq-hpqj3-juur4-2v7f3-vnnks-s2lqe-u5ane-7qe\"}; transfer_fee = 10_000; metadata = vec {}; feature_flags = opt record{icrc2 = true}; initial_balances = vec { record { record { owner = principal \"xmrdp-7ohdr-43op4-cshxh-boe6w-mph4k-4xgyd-c4ffy-n35ol-geghv-bqe\"; }; 100_000_000_000; }; }; archive_options = record { num_blocks_to_archive = 1000; trigger_threshold = 2000; controller_id = principal \"2hfij-h3wpo-rzlni-ev6kh-i5v3o-tnplr-loe4t-kh7fx-v7cev-ud5zp-vqe\"; cycles_for_archive_creation = opt 10000000000000; }; } })" 
     }, 
     "icpstore_backend": {
