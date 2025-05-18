@@ -202,7 +202,7 @@ function App() {
       if (!isConnected) {
         await window.ic.plug.requestConnect({
           whitelist: [canisterLedgerId],
-          host,
+          host: host,
         });
       }
 
@@ -225,9 +225,9 @@ function App() {
           owner: Principal.fromText(process.env.CANISTER_ID_ICPSTORE_BACKEND),
           subaccount: [],
         },
-        amount: amount,
-        fee: [], // Usar fee padrão
+        amount: BigInt(price),
         memo: [],
+        fee: [BigInt(10000)], // Usar fee padrão
         from_subaccount: [],
         created_at_time: [],
       };
