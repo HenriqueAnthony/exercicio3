@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { icpstore_backend } from "declarations/icpstore_backend";
 import { Principal } from "@dfinity/principal";
 import { idlFactory } from "../../declarations/icpsc_icrc1_ledger_canister/icpsc_icrc1_ledger_canister.did.js";
+import { AuthClient } from "@dfinity/auth-client";
+import { HttpAgent } from "@dfinity/agent";
 
 function App() {
   //constante utilizada para guardar o principal da conta de origem
@@ -120,7 +122,7 @@ function App() {
       //Caso não estiver conectada, uma nova conexão será realizada
       await window.ic.plug.requestConnect({
         whitelist: [canisterLedgerId],
-        host: host, // no caso de mainnet será necessário utilizar o host = 'https://mainnet.dfinity.network'
+        host: "https://mainnet.dfinity.network", // no caso de mainnet será necessário utilizar o host = 'https://mainnet.dfinity.network'
       });
       isConnected = true;
     }
@@ -190,43 +192,66 @@ function App() {
   // 🔽 Função de compra
   const handleBuy = async (price) => {
     try {
-      if (!window.ic || !window.ic.plug) {
-        alert("Plug Wallet não está instalada.");
+      if (!window.ic?.plug) {
+        alert("Por favor, instale a Plug Wallet primeiro!");
         return;
       }
 
-      // Conecta à Plug Wallet
-      const connected = await window.ic.plug.requestConnect({
-        whitelist: [canisterLedgerId],
-        host,
-      });
-
-      if (!connected) {
-        alert("Conexão com Plug Wallet falhou.");
-        return;
+      // Conectar à carteira se não estiver conectado
+      const isConnected = await window.ic.plug.isConnected();
+      if (!isConnected) {
+        await window.ic.plug.requestConnect({
+          whitelist: [canisterLedgerId],
+          host,
+        });
       }
 
+      // Obter o principal do usuário
       const principal = await window.ic.plug.getPrincipal();
-      console.log("Principal do usuário:", principal.toText());
+      console.log("Principal conectado:", principal.toString());
 
-      // Realiza a transferência
-      const transferResult = await window.ic.plug.requestTransfer({
-        to: Principal.fromText(
-          process.env.CANISTER_ID_ICPSTORE_BACKEND
-        ).toText(),
-        amount: BigInt(Math.floor(price * 100_000_000)), // Converter ICPSC para 8 casas decimais (ex: 10 → 1_000_000)
-        token: {
-          canisterId: canisterLedgerId,
-          standard: "ICRC1",
-        },
+      // Converter o preço para BigInt (considerando 8 decimais)
+      const amount = BigInt(Math.floor(Number(price) * 10 ** 8));
+
+      // Criar o ator da ledger
+      const ledgerActor = await window.ic.plug.createActor({
+        canisterId: canisterLedgerId,
+        interfaceFactory: idlFactory,
       });
-      
 
-      console.log("Transferência completa:", transferResult);
+      // Preparar os argumentos da transferência
+      const transferArgs = {
+        to: {
+          owner: Principal.fromText(process.env.CANISTER_ID_ICPSTORE_BACKEND),
+          subaccount: [],
+        },
+        amount: amount,
+        fee: [], // Usar fee padrão
+        memo: [],
+        from_subaccount: [],
+        created_at_time: [],
+      };
+
+      // Executar a transferência
+      const transferResult = await ledgerActor.icrc1_transfer(transferArgs);
+
+      if ("Err" in transferResult) {
+        throw new Error(
+          `Erro na transferência: ${JSON.stringify(transferResult.Err)}`
+        );
+      }
+
+      console.log(
+        "Transferência bem-sucedida. Block index:",
+        transferResult.Ok
+      );
       alert("Compra realizada com sucesso!");
-    } catch (err) {
-      console.error("Erro ao comprar:", err);
-      alert("Falha na compra. Verifique o console.");
+
+      // Atualizar os saldos
+      await getAccountFromBalance(principal.toString());
+    } catch (error) {
+      console.error("Erro detalhado na compra:", error);
+      alert(`Falha na compra: ${error.message}`);
     }
   };
 
